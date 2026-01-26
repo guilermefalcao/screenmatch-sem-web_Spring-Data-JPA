@@ -1,0 +1,57 @@
+# ========================================
+# ARQUIVOS COMPILADOS
+# ========================================
+*.class
+target/
+*.jar
+*.war
+*.ear
+
+# ========================================
+# LOGS
+# ========================================
+*.log
+logs/
+
+# ========================================
+# IDEs (IntelliJ, Eclipse, VSCode)
+# ========================================
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# ========================================
+# SISTEMA OPERACIONAL
+# ========================================
+.DS_Store
+Thumbs.db
+
+# ========================================
+# ⚠️ ARQUIVOS SENSÍVEIS (SEGURANÇA)
+# ========================================
+# Variáveis de ambiente com credenciais
+.env
+.env.local
+.env.*.local
+
+# Arquivos de propriedades com senhas
+application-local.properties
+application-secrets.properties
+**/application-secrets.properties
+
+# Chaves SSH e certificados
+*.pem
+*.key
+*.p12
+*.jks
+
+# Arquivos de backup que podem conter dados sensíveis
+*.bak
+*.backup
+*.sql
