@@ -432,6 +432,168 @@ private final String API_KEY = "&apikey=" + System.getenv("OMDB_API_KEY");
 
 ---
 
+### 8. Exercícios Práticos JPA
+**Pasta:** `exerciciosjpa/`
+
+**O que faz:** Exercícios práticos para comparar funcionalidades da JPA
+
+**Estrutura criada:**
+```
+exerciciosjpa/
+├── model/
+│   ├── Produto.java
+│   ├── Categoria.java
+│   └── Pedido.java
+├── repository/
+│   ├── ProdutoRepository.java
+│   ├── CategoriaRepository.java
+│   └── PedidoRepository.java
+└── TesteExerciciosJPA.java
+```
+
+**Passos:**
+
+1. **Criar entidades com diferentes configurações:**
+
+**Produto.java** - Exercícios 1, 2 e 3:
+```java
+@Entity
+@Table(name = "produtos")
+public class Produto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // Auto-increment
+    private Long id;
+    
+    @Column(unique = true, nullable = false)  // Único e obrigatório
+    private String nome;
+    
+    @Column(name = "valor")  // Nome da coluna no banco
+    private Double preco;
+}
+```
+
+**Categoria.java** - Exercício 4:
+```java
+@Entity
+@Table(name = "categorias")
+public class Categoria {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String nome;
+}
+```
+
+**Pedido.java** - Exercício 5:
+```java
+@Entity
+@Table(name = "pedidos")
+public class Pedido {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private LocalDate data;  // JPA converte para DATE no PostgreSQL
+}
+```
+
+2. **Criar repositórios** - Exercício 7:
+```java
+public interface ProdutoRepository extends JpaRepository<Produto, Long> {}
+public interface CategoriaRepository extends JpaRepository<Categoria, Long> {}
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {}
+```
+
+3. **Criar classe de teste** - Exercício 8:
+```java
+@Component  // Marca como componente Spring (IMPORTANTE!)
+public class TesteExerciciosJPA {
+    
+    @Autowired  // Injeção de dependência (OBRIGATÓRIO!)
+    private ProdutoRepository produtoRepository;
+    
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+    
+    @Autowired
+    private PedidoRepository pedidoRepository;
+    
+    public void executar() {
+        // Criar e salvar objetos
+        Produto produto = new Produto("Notebook Dell", 3500.00);
+        produtoRepository.save(produto);
+        
+        Categoria categoria = new Categoria("Eletrônicos");
+        categoriaRepository.save(categoria);
+        
+        Pedido pedido = new Pedido(LocalDate.now());
+        pedidoRepository.save(pedido);
+        
+        // Listar todos
+        produtoRepository.findAll().forEach(System.out::println);
+        categoriaRepository.findAll().forEach(System.out::println);
+        pedidoRepository.findAll().forEach(System.out::println);
+    }
+}
+```
+
+4. **Integrar ao menu principal:**
+
+**ScreenmatchApplication.java:**
+```java
+@Autowired
+private SerieRepository repositorio;
+
+@Autowired
+private TesteExerciciosJPA testeExerciciosJPA;  // Injetar teste
+
+public void run(String... args) {
+    Principal principal = new Principal(repositorio, testeExerciciosJPA);
+    principal.exibeMenu();
+}
+```
+
+**Principal.java:**
+```java
+private TesteExerciciosJPA testeExerciciosJPA;
+
+public Principal(SerieRepository repositorio, TesteExerciciosJPA testeExerciciosJPA) {
+    this.repositorio = repositorio;
+    this.testeExerciciosJPA = testeExerciciosJPA;
+}
+
+// Adicionar opção 5 no menu
+case 5:
+    testeExerciciosJPA.executar();
+    break;
+```
+
+**Conceitos aprendidos:**
+- Parâmetros de @Column (unique, nullable, name)
+- GenerationType.IDENTITY vs AUTO vs SEQUENCE
+- LocalDate para datas
+- @Component para classes de teste
+- Múltiplos repositórios na mesma aplicação
+- Injeção de dependência múltipla
+
+**Como testar:**
+1. Execute a aplicação
+2. Escolha opção **5** no menu
+3. Veja dados sendo salvos no console
+4. Verifique no DBeaver:
+```sql
+SELECT * FROM produtos;
+SELECT * FROM categorias;
+SELECT * FROM pedidos;
+```
+
+**Documentação completa:** `exerciciosjpa/README_EXERCICIOS_JPA.md`
+
+---
+
 ## 📝 Próximas Aulas
 
 - [ ] Consultas personalizadas com JPQL
@@ -444,4 +606,4 @@ private final String API_KEY = "&apikey=" + System.getenv("OMDB_API_KEY");
 
 **Desenvolvido por:** Guilherme Falcão  
 **Curso:** Alura - Formação Avançando com Java  
-**Última atualização:** Aula 02 - Persistência de Dados e Segurança
+**Última atualização:** Aula 02 - Persistência de Dados, Segurança e Exercícios JPA

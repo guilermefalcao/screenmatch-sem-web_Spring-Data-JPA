@@ -1,6 +1,7 @@
 package br.com.alura.screenmatch.principal;
 
 import br.com.alura.screenmatch.exercicios.ExerciciosResolvidos;
+import br.com.alura.screenmatch.exerciciosjpa.TesteExerciciosJPA;
 import br.com.alura.screenmatch.model.DadosSerie;
 import br.com.alura.screenmatch.model.DadosTemporada;
 import br.com.alura.screenmatch.model.Episodio;
@@ -33,11 +34,15 @@ public class Principal {
 
     // Repositório para acessar o banco de dados
     private SerieRepository repositorio;
+    
+    // Teste dos exercícios JPA
+    private TesteExerciciosJPA testeExerciciosJPA;
 
     // Construtor que recebe o repositório por injeção de dependência
     // O Spring passa automaticamente o repositório quando cria esta classe
-    public Principal(SerieRepository repositorio) {
+    public Principal(SerieRepository repositorio, TesteExerciciosJPA testeExerciciosJPA) {
         this.repositorio = repositorio;
+        this.testeExerciciosJPA = testeExerciciosJPA;
     }
 
 
@@ -52,8 +57,8 @@ public class Principal {
                 2 - Buscar episódios
                 3 - Listar series buscadas
                 
-                
                 4 - Exercícios resolvidos
+                5 - Testar Exercícios JPA (Produto, Categoria, Pedido)
                 
                 0 - Sair                                 
                 """;
@@ -74,6 +79,9 @@ public class Principal {
                 break;
             case 4:
                 ExerciciosResolvidos.executarTodos();
+                break;
+            case 5:
+                testeExerciciosJPA.executar();
                 break;
             case 0:
                 System.out.println("Saindo...");

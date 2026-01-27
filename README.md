@@ -29,12 +29,25 @@ Projeto desenvolvido no segundo curso da formação Avançando com Java da Alura
 - ✅ Mapeamento de atributos com `@JsonAlias`
 - ✅ 8 exercícios resolvidos sobre manipulação de dados e enums
 
+### Aula 02 - Persistência de Dados com JPA
+
+- ✅ Configuração do PostgreSQL e conexão com banco de dados
+- ✅ Mapeamento de entidades JPA com anotações (@Entity, @Id, @Column)
+- ✅ Criação de repositórios com JpaRepository
+- ✅ Injeção de dependência com @Autowired
+- ✅ Persistência automática de dados no banco
+- ✅ Variáveis de ambiente para proteção de credenciais (.env)
+- ✅ Exercícios práticos JPA (Produto, Categoria, Pedido)
+
 ## 🛠️ Tecnologias Utilizadas
 
 - Java 17
 - Spring Boot 3.1.1
-- Jackson (para processamento JSON)
-- Maven
+- Spring Data JPA (persistência)
+- PostgreSQL (banco de dados)
+- Hibernate (ORM)
+- Jackson (processamento JSON)
+- Maven (gerenciamento de dependências)
 - API OMDB (busca de séries)
 - API MyMemory (tradução gratuita)
 
@@ -47,11 +60,12 @@ src/main/java/br/com/alura/screenmatch/
 │   ├── DadosSerie.java (record para API)
 │   ├── DadosTemporada.java
 │   ├── Episodio.java
-│   └── Serie.java (classe principal)
+│   └── Serie.java (entidade JPA)
+├── repository/
+│   └── SerieRepository.java (JpaRepository)
 ├── service/
 │   ├── ConsumoApi.java
 │   ├── ConverteDados.java
-│   ├── ConsultaChatGPT.java
 │   └── traducao/
 │       ├── ConsultaMyMemory.java
 │       ├── DadosTraducao.java
@@ -61,24 +75,58 @@ src/main/java/br/com/alura/screenmatch/
 │   ├── Mes.java (enum)
 │   ├── Moeda.java (enum)
 │   └── CodigoErro.java (enum)
+├── exerciciosjpa/
+│   ├── model/
+│   │   ├── Produto.java
+│   │   ├── Categoria.java
+│   │   └── Pedido.java
+│   ├── repository/
+│   │   ├── ProdutoRepository.java
+│   │   ├── CategoriaRepository.java
+│   │   └── PedidoRepository.java
+│   └── TesteExerciciosJPA.java
 └── principal/
     └── Principal.java (menu)
 ```
 
 ## 🚀 Como Executar
 
-1. Clone o repositório
-2. Abra o projeto no VS Code ou IntelliJ
-3. Execute a classe `ScreenmatchApplication`
-4. Navegue pelo menu:
-   - **1** - Buscar séries na API OMDB
-   - **2** - Buscar episódios de uma série
-   - **3** - Listar séries buscadas (com tradução)
-   - **4** - Ver exercícios resolvidos
-   - **0** - Sair
+### 1. Configurar variáveis de ambiente
+
+Copie o arquivo `.env.example` para `.env` e preencha com suas credenciais:
+
+```bash
+cp .env.example .env
+```
+
+Edite o `.env`:
+```properties
+OMDB_API_KEY=sua-chave-omdb
+DB_URL=jdbc:postgresql://localhost:5433/alura_series
+DB_USERNAME=postgres
+DB_PASSWORD=sua-senha
+```
+
+### 2. Executar a aplicação
+
+```bash
+mvn spring-boot:run
+```
+
+Ou execute a classe `ScreenmatchApplication` pela IDE.
+
+### 3. Navegar pelo menu
+
+- **1** - Buscar séries na API OMDB
+- **2** - Buscar episódios de uma série
+- **3** - Listar séries buscadas (do banco de dados)
+- **4** - Ver exercícios resolvidos (Aula 01)
+- **5** - Testar exercícios JPA (Produto, Categoria, Pedido)
+- **0** - Sair
 
 ## 📝 Conceitos Aprendidos
 
+### Aula 01:
 - Modelagem de classes e enums
 - Conversão de tipos com Optional
 - Consumo de APIs REST
@@ -87,13 +135,33 @@ src/main/java/br/com/alura/screenmatch/
 - Streams e manipulação de coleções
 - Tratamento de erros e exceções
 
+### Aula 02:
+- Configuração de banco de dados PostgreSQL
+- Mapeamento objeto-relacional (ORM) com Hibernate
+- Anotações JPA (@Entity, @Id, @GeneratedValue, @Column, @Transient)
+- Repositórios com Spring Data JPA
+- Injeção de dependência (@Autowired)
+- Variáveis de ambiente para segurança
+- Persistência automática de dados
+
 ## 🔗 Links Úteis
 
 - [API OMDB](http://www.omdbapi.com/)
 - [API MyMemory](https://mymemory.translated.net/)
 - [Documentação Spring Boot](https://spring.io/projects/spring-boot)
+- [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
+- [PostgreSQL](https://www.postgresql.org/)
+
+---
+
+## 📚 Documentação Adicional
+
+- **Readme_aulas.md** - Guia passo a passo de todas as aulas
+- **exerciciosjpa/README_EXERCICIOS_JPA.md** - Exercícios práticos de JPA
+- **exerciciosjpa/COMO_TESTAR.md** - Guia rápido de testes
 
 ---
 
 **Desenvolvido por:** Guilherme Falcão  
-**Curso:** Alura - Formação Avançando com Java
+**Curso:** Alura - Formação Avançando com Java  
+**Última atualização:** Aula 02 - Persistência de Dados e Exercícios JPA
