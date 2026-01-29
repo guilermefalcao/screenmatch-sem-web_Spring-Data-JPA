@@ -184,17 +184,17 @@ public class Serie {
         this.episodios = episodios;
     }
 
-    // Método toString para exibir as informações da série
+    // Método toString para exibir as informações da série de forma legível
     @Override
     public String toString() {
-        return "genero='" + genero + '\'' +
-                ", titulo='" + titulo + '\'' +
-                ", totalTemporadas=" + totalTemporadas +
-                ", avaliacao=" + avaliacao +
-                ", atores='" + atores + '\'' +
-                ", poster='" + poster + '\'' +
-                ", sinopse='" + sinopse + '\''+
-                ", episodios='" + episodios + '\'';
-                
+        return "\n=== DADOS DA SÉRIE ===" +
+                "\nTítulo: " + titulo +
+                "\nGênero: " + genero +
+                "\nTotal de Temporadas: " + totalTemporadas +
+                "\nAvaliação: " + avaliacao +
+                "\nAtores: " + atores +
+                "\nSinopse: " + sinopse +
+                "\nEpisódios salvos: " + episodios.size() +
+                "\n";
     }
 }

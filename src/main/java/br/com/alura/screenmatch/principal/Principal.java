@@ -36,6 +36,10 @@ public class Principal {
 
     private List<Serie> series = new ArrayList<>();
 
+    // Variável para armazenar a última série buscada (reutilização entre métodos)
+    // Usado em buscarSerieporTitulo() e topEpisodiosPorSerie()
+    private Optional<Serie> serieBusca;
+
     // Repositório para acessar o banco de dados
     private SerieRepository repositorio;
 
@@ -67,9 +71,10 @@ public class Principal {
                     7 - Buscar séries por categoria
                     8 - Filtrar séries
                     9 - Buscar episódio por trecho
+                    10 - Top 5 episódios por série
                     
-                    10 - Exercícios resolvidos
-                    11 - Testar Exercícios JPA (Produto, Categoria, Pedido)
+                    11 - Exercícios resolvidos
+                    12 - Testar Exercícios JPA (Produto, Categoria, Pedido)
 
                     0 - Sair
                     
@@ -108,9 +113,12 @@ public class Principal {
                     buscarEpisodioPorTrecho();
                     break;
                 case 10:
-                    ExerciciosResolvidos.executarTodos();
+                    topEpisodiosPorSerie();
                     break;
                 case 11:
+                    ExerciciosResolvidos.executarTodos();
+                    break;
+                case 12:
                     testeExerciciosJPA.executar();
                     break;
                 case 0:
@@ -265,12 +273,21 @@ public class Principal {
      * Método para buscar série por título no banco de dados
      * Usa Derived Query Method do Spring Data JPA
      * 
+     * EVOLUÇÃO DO CÓDIGO:
+     * ANTES: Retornava Optional<Serie> local (serieBuscada)
+     * AGORA: Armazena resultado em variável de instância (serieBusca)
+     * 
+     * POR QUE MUDOU?
+     * - Permite REUTILIZAR a série buscada em outros métodos
+     * - Exemplo: topEpisodiosPorSerie() usa a mesma série
+     * - Evita buscar a mesma série várias vezes no banco
+     * 
      * Como funciona:
      * 1. Solicita nome da série ao usuário
      * 2. Busca no banco usando findByTituloContainingIgnoreCase()
      *    - Containing: Busca parcial (LIKE %nome%)
      *    - IgnoreCase: Ignora maiúsculas/minúsculas
-     * 3. Retorna Optional<Serie> (pode estar vazio)
+     * 3. Armazena resultado em serieBusca (variável de instância)
      * 4. Verifica se encontrou e exibe resultado
      * 
      * Exemplo SQL gerado:
@@ -280,11 +297,11 @@ public class Principal {
         System.out.println("Escolha uma serie pelo nome: ");
         var nomeSerie = leitura.nextLine();
         
-        // Busca no banco usando método derivado do Spring Data JPA
-        Optional<Serie> serieBuscada = repositorio.findByTituloContainingIgnoreCase(nomeSerie);
+        // NOVO: Armazena em variável de instância para reutilizar
+        serieBusca = repositorio.findByTituloContainingIgnoreCase(nomeSerie);
 
-        if (serieBuscada.isPresent()) {
-            System.out.println("Dados da série: " + serieBuscada.get());
+        if (serieBusca.isPresent()) {
+            System.out.println("Dados da série: " + serieBusca.get());
         } else {
             System.out.println("❌ Série não encontrada!");
         }
@@ -562,6 +579,84 @@ public class Principal {
             System.out.println("\n✅ Episódios encontrados:");
             episodiosEncontrados.forEach(System.out::println);
             System.out.println();
+        }
+    }
+
+    /**
+     * Método para buscar Top 5 episódios de uma série específica
+     * Usa JPQL com JOIN, ORDER BY e LIMIT
+     * 
+     * O QUE FAZ:
+     * 1. Reutiliza a série buscada anteriormente (serieBusca)
+     * 2. Se não houver série buscada, chama buscarSerieporTitulo()
+     * 3. Busca os 5 episódios com melhor avaliação da série
+     * 4. Exibe os episódios formatados
+     * 
+     * JPQL USADO:
+     * SELECT e FROM Serie s JOIN s.episodios e 
+     * WHERE s = :serie 
+     * ORDER BY e.avaliacao DESC 
+     * LIMIT 5
+     * 
+     * EXPLICAÇÃO DA QUERY:
+     * - SELECT e: Seleciona apenas os episódios
+     * - FROM Serie s JOIN s.episodios e: JOIN entre série e episódios
+     * - WHERE s = :serie: Filtra por série específica (parâmetro)
+     * - ORDER BY e.avaliacao DESC: Ordena por avaliação (maior para menor)
+     * - LIMIT 5: Retorna apenas os 5 primeiros
+     * 
+     * SQL GERADO:
+     * SELECT e.* FROM episodios e
+     * JOIN series s ON e.serie_id = s.id
+     * WHERE s.id = ?
+     * ORDER BY e.avaliacao DESC
+     * LIMIT 5
+     * 
+     * EXEMPLO DE USO:
+     * 1. Usuário escolhe opção 4 (buscar série por título) → "The Boys"
+     * 2. Usuário escolhe opção 10 (top 5 episódios)
+     * 3. Sistema exibe os 5 melhores episódios de "The Boys"
+     * 
+     * VANTAGENS:
+     * ✅ Reutiliza série já buscada (evita busca duplicada)
+     * ✅ Query otimizada com JOIN e LIMIT
+     * ✅ Ordenação no banco (mais rápido que em memória)
+     * ✅ Formatação clara e legível
+     */
+    private void topEpisodiosPorSerie() {
+        // 1. Verifica se já existe uma série buscada anteriormente
+        // Se não existir ou estiver vazia, busca uma nova série
+        if (serieBusca == null || serieBusca.isEmpty()) {
+            buscarSerieporTitulo();
+        }
+        
+        // 2. Verifica novamente se a série foi encontrada
+        if (serieBusca.isPresent()) {
+            // 3. Obtém a série do Optional
+            Serie serie = serieBusca.get();
+            
+            // 4. Busca os top 5 episódios usando JPQL com JOIN, ORDER BY e LIMIT
+            List<Episodio> topEpisodios = repositorio.topEpisodiosPorSerie(serie);
+            
+            // 5. Verifica se encontrou episódios
+            if (topEpisodios.isEmpty()) {
+                System.out.println("❌ Nenhum episódio encontrado para a série: " + serie.getTitulo());
+                System.out.println("⚠️  Certifique-se de que os episódios foram salvos (opção 2).");
+            } else {
+                // 6. Exibe os top 5 episódios formatados
+                System.out.println("\n🏆 Top 5 Episódios de " + serie.getTitulo() + ":");
+                topEpisodios.forEach(e -> 
+                    System.out.printf("Série: %s | Temporada: %s | Episódio: %s - %s | Avaliação: %.1f%n",
+                        e.getSerie().getTitulo(),
+                        e.getTemporada(),
+                        e.getNumeroEpisodio(),
+                        e.getTitulo(),
+                        e.getAvaliacao())
+                );
+                System.out.println();
+            }
+        } else {
+            System.out.println("❌ Série não encontrada!");
         }
     }
 

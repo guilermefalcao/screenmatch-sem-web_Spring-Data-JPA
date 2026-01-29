@@ -55,11 +55,13 @@ Projeto desenvolvido no segundo curso da formação Avançando com Java da Alura
 - ✅ Top N queries com findTop5ByOrderByAvaliacaoDesc
 - ✅ Busca por categoria com enum e tratamento de variações
 - ✅ Filtrar séries por temporadas e avaliação
-- ✅ 17 exercícios avançados de Derived Queries
+- ✅ JPQL com JOIN para buscar episódios por trecho
+- ✅ JPQL com WHERE usando objeto (s = :serie)
+- ✅ Top 5 episódios por série com ORDER BY e LIMIT
+- ✅ Reutilização de variáveis de instância (serieBusca)
 - ✅ Otimização de buscas (banco vs memória)
 - ✅ Tratamento de dados nulos da API OMDB
-- ✅ Comparação: Streams vs Derived Queries
-- ✅ Tipos de retorno (Optional, List, long, boolean)
+- ✅ Comparação: Streams vs Derived Queries vs JPQL
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -147,8 +149,10 @@ Ou execute a classe `ScreenmatchApplication` pela IDE.
 - **6** - Top 5 séries com melhor avaliação
 - **7** - Buscar séries por categoria
 - **8** - Filtrar séries por temporadas e avaliação
-- **9** - Ver exercícios resolvidos (Aula 01)
-- **10** - Testar exercícios JPA e Derived Queries
+- **9** - Buscar episódio por trecho (JPQL com JOIN)
+- **10** - Top 5 episódios por série (JPQL com ORDER BY)
+- **11** - Ver exercícios resolvidos (Aula 01)
+- **12** - Testar exercícios JPA (Produto, Categoria, Pedido)
 - **0** - Sair
 
 ## 📝 Conceitos Aprendidos
@@ -184,9 +188,13 @@ Ou execute a classe `ScreenmatchApplication` pela IDE.
 - **Queries compostas** com múltiplos critérios (AND, OR)
 - **Top N queries** (findTop5, findFirst10)
 - **Ordenação** (OrderBy...Desc/Asc)
+- **JPQL com JOIN** para buscar episódios
+- **JPQL com WHERE usando objeto** (s = :serie)
+- **ORDER BY + LIMIT** para top N episódios
+- **Reutilização de variáveis** entre métodos (serieBusca)
 - **Otimização**: Busca direta no banco vs lista em memória
 - **Tratamento de nulls** da API externa
-- **Limpeza de dados** inválidos com deleteAll()
+- **Comparação**: Derived Queries vs JPQL
 
 ## 🔗 Links Úteis
 
@@ -201,6 +209,7 @@ Ou execute a classe `ScreenmatchApplication` pela IDE.
 ## 📚 Documentação Adicional
 
 - **Readme_aulas.md** - Guia passo a passo de todas as aulas
+- **TESTE_TOP_EPISODIOS.md** - Guia de teste da opção 10 (Top 5 episódios)
 - **exerciciosjpa/README_EXERCICIOS_JPA.md** - Exercícios práticos de JPA
 - **exerciciosjpa/COMO_TESTAR.md** - Guia rápido de testes
 

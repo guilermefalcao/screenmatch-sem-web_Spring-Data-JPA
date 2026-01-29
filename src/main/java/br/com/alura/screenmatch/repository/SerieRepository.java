@@ -267,4 +267,49 @@ public interface SerieRepository extends JpaRepository<Serie, Long> {
     @Query("SELECT e FROM Serie s JOIN s.episodios e WHERE e.titulo ILIKE %:trechoEpisodio%")
     List<Episodio> episodiosPorTrecho(@Param("trechoEpisodio") String trechoEpisodio);
 
+    /**
+     * Busca Top 5 episódios de uma série específica usando JPQL com JOIN, ORDER BY e LIMIT
+     * 
+     * JPQL SYNTAX:
+     * - SELECT e: Seleciona apenas os episódios (entidade Episodio)
+     * - FROM Serie s: Começa pela entidade Serie (alias 's')
+     * - JOIN s.episodios e: Faz JOIN com a lista de episódios (alias 'e')
+     *   - s.episodios: Atributo da entidade Serie (relacionamento @OneToMany)
+     * - WHERE s = :serie: Filtra por série específica
+     *   - s = :serie: Compara objeto Serie completo (usa ID internamente)
+     * - ORDER BY e.avaliacao DESC: Ordena por avaliação (maior para menor)
+     * - LIMIT 5: Retorna apenas os 5 primeiros resultados
+     * 
+     * SQL GERADO:
+     * SELECT e.* FROM episodios e
+     * JOIN series s ON e.serie_id = s.id
+     * WHERE s.id = ?
+     * ORDER BY e.avaliacao DESC
+     * LIMIT 5
+     * 
+     * POR QUE USAR WHERE s = :serie?
+     * - Comparação de objetos JPA (mais elegante)
+     * - Hibernate converte automaticamente para WHERE s.id = serie.id
+     * - Alternativa: WHERE s.id = :serieId (precisa passar ID manualmente)
+     * 
+     * DIFERENÇA: ORDER BY vs findTop5
+     * - ORDER BY + LIMIT: JPQL manual (mais flexível)
+     * - findTop5ByOrderBy...: Derived Query (automático, mas nome longo)
+     * 
+     * @param serie Série para buscar os melhores episódios
+     * @return Lista com no máximo 5 episódios ordenados por avaliação
+     * 
+     * Exemplos de uso:
+     * - topEpisodiosPorSerie(theBoysEntity) → Top 5 episódios de The Boys
+     * - topEpisodiosPorSerie(friendsEntity) → Top 5 episódios de Friends
+     * 
+     * VANTAGENS:
+     * ✅ Ordenação no banco (mais rápido que em memória)
+     * ✅ LIMIT otimizado (não carrega todos os episódios)
+     * ✅ Query específica para uma série (WHERE s = :serie)
+     * ✅ Retorna apenas episódios (não série completa)
+     */
+    @Query("SELECT e FROM Serie s JOIN s.episodios e WHERE s = :serie ORDER BY e.avaliacao DESC LIMIT 5")
+    List<Episodio> topEpisodiosPorSerie(@Param("serie") Serie serie);
+
 }
