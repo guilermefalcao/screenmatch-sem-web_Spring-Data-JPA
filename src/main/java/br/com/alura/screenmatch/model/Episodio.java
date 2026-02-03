@@ -3,6 +3,7 @@ package br.com.alura.screenmatch.model;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 // @Entity: Marca esta classe como uma ENTIDADE JPA (será mapeada para uma tabela no banco)
@@ -34,6 +35,12 @@ public class Episodio {
     // @ManyToOne: Indica que MUITOS episódios pertencem a UMA série
     // Exemplo: 10 episódios (MANY) -> 1 série (ONE)
     // Isso cria uma coluna "serie_id" na tabela episodios (chave estrangeira)
+    
+    // @JsonIgnore: IMPORTANTE! Evita loop infinito na serialização JSON
+    // Quando Serie é convertida para JSON, ela inclui episodios
+    // Mas se episodio incluir serie, cria loop: Serie -> Episodio -> Serie -> ...
+    // @JsonIgnore diz ao Jackson: "Não inclua este campo no JSON"
+    @JsonIgnore
     @ManyToOne
     private Serie serie;
     

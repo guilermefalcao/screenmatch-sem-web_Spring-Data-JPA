@@ -20,15 +20,20 @@ Projeto desenvolvido no segundo curso da formação Avançando com Java da Alura
 ### Aula 04 - Desenvolvimento Web com Spring Boot
 
 - ✅ Configuração do Spring Boot Web (spring-boot-starter-web)
+- ✅ Spring Boot DevTools para hot reload automático
 - ✅ Servidor Tomcat embutido na porta 8080
 - ✅ Criação de Controllers REST (@RestController)
-- ✅ Primeiro endpoint GET com @GetMapping
-- ✅ Captura de parâmetros com @RequestParam
+- ✅ Endpoints GET com @GetMapping (/series, /inicio)
+- ✅ DTOs (Data Transfer Objects) - SerieDTO
+- ✅ Conversão Serie → SerieDTO com stream().map()
+- ✅ @JsonIgnore para evitar loop infinito de serialização
+- ✅ CORS (Cross-Origin Resource Sharing) - CorsConfiguration
+- ✅ Autorização de origens (allowedOrigins)
 - ✅ Arquitetura MVC (Model-View-Controller)
 - ✅ Separação de camadas (Controller, Service, Repository)
 - ✅ Backup da versão console (ScreenmatchApplicationSemWeb)
 - ✅ Configuração de classe principal no pom.xml
-- ✅ Testes de endpoints via navegador
+- ✅ Testes de endpoints via navegador e Postman
 
 ### Aula 01 - Modelando a aplicação
 
@@ -209,12 +214,15 @@ Para usar a versão console com menu interativo:
 
 ### Aula 04:
 - Configuração de aplicação web com Spring Boot
-- Dependência spring-boot-starter-web
+- Dependência spring-boot-starter-web e spring-boot-devtools
 - Servidor Tomcat embutido
 - Arquitetura MVC (Model-View-Controller)
 - Controllers REST com @RestController
 - Mapeamento de rotas com @GetMapping
-- Captura de parâmetros com @RequestParam
+- DTOs (Data Transfer Objects) para serialização
+- @JsonIgnore para evitar loop infinito
+- CORS (Cross-Origin Resource Sharing)
+- DevTools para hot reload automático
 - Diferença entre aplicação console e web
 - Configuração de classe principal no Maven
 - Separação de camadas (Controller, Service, Repository)

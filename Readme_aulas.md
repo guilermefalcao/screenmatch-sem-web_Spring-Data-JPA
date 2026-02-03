@@ -2703,3 +2703,432 @@ public String obterSeries(@RequestParam String nome) {
 **Desenvolvido por:** Guilherme Falcão  
 **Curso:** Alura - Formação Avançando com Java  
 **Última atualização:** Aula 04 - Desenvolvimento Web (Spring Boot + REST)
+
+
+## 🌐 AULA 04 - Desenvolvimento Web com Spring Boot (COMPLETA)
+
+### 1. Adicionar Dependência Spring Boot Web
+**Arquivo:** `pom.xml`
+
+**O que faz:** Transforma aplicação console em aplicação web
+
+**Dependências adicionadas:**
+```xml
+<!-- Spring Boot Web: Tomcat + Spring MVC + Jackson -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<!-- DevTools: Hot reload automático -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <scope>runtime</scope>
+    <optional>true</optional>
+</dependency>
+```
+
+**O que spring-boot-starter-web traz:**
+- ✅ Apache Tomcat (servidor web embutido)
+- ✅ Spring MVC (framework para controllers)
+- ✅ Jackson (conversão JSON ↔ Java)
+- ✅ Validação de dados
+- ✅ Recursos web (arquivos estáticos)
+
+**Conceitos aprendidos:**
+- Starters do Spring Boot
+- Servidor embutido vs externo
+- Convenção sobre configuração
+
+---
+
+### 2. Transformar Aplicação Console em Web
+**Arquivos:** `ScreenmatchApplication.java`, `ScreenmatchApplicationSemWeb.java`
+
+**ANTES (Console):**
+```java
+@SpringBootApplication
+public class ScreenmatchApplication implements CommandLineRunner {
+    @Autowired
+    private SerieRepository repositorio;
+    
+    @Override
+    public void run(String... args) {
+        Principal principal = new Principal(repositorio);
+        principal.exibeMenu();
+    }
+}
+```
+
+**AGORA (Web):**
+```java
+@SpringBootApplication
+public class ScreenmatchApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ScreenmatchApplication.class, args);
+        // Inicia servidor Tomcat na porta 8080
+        // Fica aguardando requisições HTTP
+    }
+}
+```
+
+**Backup (ScreenmatchApplicationSemWeb):**
+```java
+// @SpringBootApplication  // Comentado para não conflitar
+public class ScreenmatchApplicationSemWeb implements CommandLineRunner {
+    // Código original mantido como backup
+}
+```
+
+**Configurar classe principal no pom.xml:**
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+                <mainClass>br.com.alura.screenmatch.ScreenmatchApplication</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+**Conceitos aprendidos:**
+- CommandLineRunner vs aplicação web
+- Ciclo de vida da aplicação
+- Servidor HTTP vs execução única
+
+---
+
+### 3. Criar Controller REST
+**Arquivo:** `controller/SerieController.java`
+
+**O que faz:** Recebe requisições HTTP e retorna respostas
+
+**Código:**
+```java
+@RestController
+public class SerieController {
+    
+    @Autowired
+    private SerieRepository repositorio;
+    
+    // Endpoint de teste
+    @GetMapping("/inicio")
+    public String inicio() {
+        return "Bem-vindo ao Screenmatch!";
+    }
+    
+    // Endpoint que retorna séries
+    @GetMapping("/series")
+    public List<SerieDTO> obterSeries() {
+        return repositorio.findAll()
+                .stream()
+                .map(s -> new SerieDTO(...))
+                .collect(Collectors.toList());
+    }
+}
+```
+
+**Anotações:**
+- `@RestController` - Controller REST (retorna dados, não HTML)
+- `@GetMapping` - Mapeia requisição GET para método
+- `@Autowired` - Injeção de dependência
+
+**Conceitos aprendidos:**
+- Controllers REST
+- Mapeamento de rotas
+- Retorno automático de JSON
+
+---
+
+### 4. Criar DTO (Data Transfer Object)
+**Arquivo:** `dto/SerieDTO.java`
+
+**O que faz:** Controla quais dados são expostos na API (SEM episódios)
+
+**Código:**
+```java
+public record SerieDTO(
+        Long id,
+        String titulo,
+        Integer totalTemporadas,
+        Double avaliacao,
+        Categoria genero,
+        String atores,
+        String poster,
+        String sinopse
+) {
+    // Record gera automaticamente:
+    // - Construtor
+    // - Getters (id(), titulo(), etc.)
+    // - equals(), hashCode(), toString()
+    // - É IMUTÁVEL (sem setters)
+}
+```
+
+**Por que usar DTO?**
+- ✅ Evita expor relacionamentos complexos (episódios)
+- ✅ Evita loop infinito de serialização JSON
+- ✅ Controla dados expostos
+- ✅ Melhora performance
+- ✅ Desacopla API da estrutura do banco
+
+**Conversão Serie → SerieDTO:**
+```java
+return repositorio.findAll()
+        .stream()
+        .map(s -> new SerieDTO(
+                s.getId(),
+                s.getTitulo(),
+                s.getTotalTemporadas(),
+                s.getAvaliacao(),
+                s.getGenero(),
+                s.getAtores(),
+                s.getPoster(),
+                s.getSinopse()
+        ))
+        .collect(Collectors.toList());
+```
+
+**Conceitos aprendidos:**
+- DTOs para transferência de dados
+- Records em Java
+- Stream API para conversão
+- Serialização JSON
+
+---
+
+### 5. Evitar Loop Infinito com @JsonIgnore
+**Arquivo:** `model/Episodio.java`
+
+**Problema:** Relacionamento bidirecional causa loop infinito
+
+```
+Serie → episodios → Serie → episodios → ...
+```
+
+**Solução:**
+```java
+@Entity
+public class Episodio {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    // @JsonIgnore: Não inclui este campo no JSON
+    @JsonIgnore
+    @ManyToOne
+    private Serie serie;
+    
+    // ... outros campos
+}
+```
+
+**Conceitos aprendidos:**
+- Serialização circular
+- @JsonIgnore
+- Controle de serialização JSON
+
+---
+
+### 6. Configurar CORS
+**Arquivo:** `config/CorsConfiguration.java`
+
+**O que faz:** Permite front-end acessar back-end
+
+**Problema sem CORS:**
+```
+Front-end (http://127.0.0.1:5501) 
+    ↓ tenta acessar
+Back-end (http://localhost:8080)
+    ↓
+❌ BLOQUEADO pelo navegador!
+```
+
+**Solução:**
+```java
+@Configuration
+public class CorsConfiguration implements WebMvcConfigurer {
+    
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")  // Todas as rotas
+                .allowedOrigins("http://127.0.0.1:5501")  // Autoriza Live Server
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS");
+    }
+}
+```
+
+**Configurações:**
+- `addMapping("/**")` - Aplica em todas as rotas
+- `allowedOrigins()` - Quais domínios podem acessar
+- `allowedMethods()` - Quais métodos HTTP são permitidos
+
+**Conceitos aprendidos:**
+- CORS (Cross-Origin Resource Sharing)
+- Segurança de navegadores
+- Autorização de origens
+- Pré-flight requests (OPTIONS)
+
+---
+
+### 7. DevTools para Hot Reload
+**Arquivo:** `pom.xml`
+
+**O que faz:** Reinicia aplicação automaticamente ao salvar arquivo
+
+**Fluxo:**
+```
+1. Editar código
+2. Salvar (Ctrl+S)
+3. DevTools detecta mudança
+4. Reinicia aplicação (2-5 segundos)
+5. Testar no navegador
+```
+
+**Vantagens:**
+- ⚡ Reinício rápido (2-5s vs 10-30s)
+- 🔄 Automático
+- 🚀 Mais produtividade
+- 🔒 Não vai para produção
+
+**Conceitos aprendidos:**
+- Hot reload
+- Desenvolvimento ágil
+- ClassLoaders (base + restart)
+
+---
+
+## 📊 Arquitetura MVC
+
+```
+┌─────────────────────────────────────┐
+│  CLIENTE (Navegador/Postman)        │
+│  http://localhost:8080/series       │
+└─────────────┬───────────────────────┘
+              │ HTTP Request
+              ↓
+┌─────────────────────────────────────┐
+│  CONTROLLER (SerieController)       │
+│  @RestController                    │
+│  @GetMapping("/series")             │
+└─────────────┬───────────────────────┘
+              │
+              ↓
+┌─────────────────────────────────────┐
+│  REPOSITORY (SerieRepository)       │
+│  findAll()                          │
+└─────────────┬───────────────────────┘
+              │
+              ↓
+┌─────────────────────────────────────┐
+│  MODEL (Serie, Episodio)            │
+│  @Entity                            │
+└─────────────┬───────────────────────┘
+              │
+              ↓
+┌─────────────────────────────────────┐
+│  DATABASE (PostgreSQL)              │
+│  Tabelas: series, episodios         │
+└─────────────────────────────────────┘
+              │
+              ↓ (conversão)
+┌─────────────────────────────────────┐
+│  DTO (SerieDTO)                     │
+│  Dados expostos na API              │
+└─────────────┬───────────────────────┘
+              │
+              ↓ JSON
+┌─────────────────────────────────────┐
+│  CLIENTE recebe JSON                │
+│  [{"id":1,"titulo":"Breaking Bad"}] │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 🧪 Testando a API
+
+### Endpoints Disponíveis
+
+| Endpoint | Método | Retorno | Descrição |
+|----------|--------|---------|-----------|
+| `/inicio` | GET | Texto | Teste DevTools |
+| `/series` | GET | JSON | Lista séries (DTO) |
+
+### Teste 1: Endpoint /inicio
+```
+http://localhost:8080/inicio
+```
+**Resposta:**
+```
+Bem-vindo ao Screenmatch!
+```
+
+### Teste 2: Endpoint /series
+```
+http://localhost:8080/series
+```
+**Resposta:**
+```json
+[
+  {
+    "id": 1,
+    "titulo": "Breaking Bad",
+    "totalTemporadas": 5,
+    "avaliacao": 9.5,
+    "genero": "DRAMA",
+    "atores": "Bryan Cranston, Aaron Paul",
+    "poster": "https://...",
+    "sinopse": "Um professor..."
+  }
+]
+```
+
+**Nota:** Campo `episodios` NÃO aparece (controlado pelo DTO)
+
+---
+
+## 📝 Resumo da Aula 04
+
+### ✅ O que você aprendeu:
+
+1. **Spring Boot Web**
+   - Dependência spring-boot-starter-web
+   - Servidor Tomcat embutido
+   - Porta 8080 padrão
+
+2. **Controllers REST**
+   - @RestController
+   - @GetMapping
+   - Retorno automático de JSON
+
+3. **DTOs**
+   - Data Transfer Objects
+   - Records em Java
+   - Conversão com stream().map()
+
+4. **CORS**
+   - Cross-Origin Resource Sharing
+   - Autorização de origens
+   - Segurança de navegadores
+
+5. **DevTools**
+   - Hot reload automático
+   - Economia de tempo
+   - Desenvolvimento ágil
+
+6. **Arquitetura MVC**
+   - Separação de camadas
+   - Controller, Service, Repository, Model
+   - Responsabilidades bem definidas
+
+---
+
+**Desenvolvido por:** Guilherme Falcão  
+**Curso:** Alura - Formação Avançando com Java  
+**Última atualização:** Aula 04 - Desenvolvimento Web (Completa)

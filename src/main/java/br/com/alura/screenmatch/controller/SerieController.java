@@ -1,8 +1,13 @@
 package br.com.alura.screenmatch.controller;
 
+import br.com.alura.screenmatch.dto.SerieDTO;
+import br.com.alura.screenmatch.repository.SerieRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * CONTROLLER REST - Camada de Apresentação
@@ -20,45 +25,146 @@ import org.springframework.web.bind.annotation.RequestParam;
  *   - Mapeia uma URL para um método Java
  *   - Exemplo: GET http://localhost:8080/series
  * 
- * - @RequestParam: Captura parâmetros da URL (query string)
- *   - Exemplo: /series?nomedaserie=Breaking+Bad
- *   - required = false: parâmetro é opcional
+ * - @Autowired: Injeção de dependência
+ *   - Spring cria e injeta automaticamente o SerieRepository
+ *   - Não precisa fazer "new SerieRepository()"
  * 
- * FLUXO DE REQUISIÇÃO:
- * 1. Cliente faz requisição: GET http://localhost:8080/series?nomedaserie=Lost
+ * FLUXO DE REQUISIÇÃO COM DTO:
+ * 1. Cliente faz requisição: GET http://localhost:8080/series
  * 2. Spring identifica o @GetMapping("/series")
- * 3. Spring chama o método obterSeries("Lost")
- * 4. Método retorna: "Série informada: Lost"
- * 5. Spring envia resposta HTTP 200 com o texto
+ * 3. Spring chama o método obterSeries()
+ * 4. Método busca todas as séries no banco (repositorio.findAll())
+ * 5. Converte cada Serie (entidade) para SerieDTO usando stream().map()
+ * 6. Spring converte List<SerieDTO> para JSON automaticamente
+ * 7. Cliente recebe resposta HTTP 200 com JSON (SEM episódios)
  * 
- * EXEMPLOS DE USO:
- * - http://localhost:8080/series → "Nenhuma série informada"
- * - http://localhost:8080/series?nomedaserie=Lost → "Série informada: Lost"
+ * POR QUE USAR DTO?
+ * - Evita expor relacionamentos complexos (episódios)
+ * - Evita loop infinito de serialização JSON
+ * - Controla exatamente quais dados são expostos
+ * - Melhora performance (não carrega episódios)
+ * - Desacopla API da estrutura do banco
+ * 
+ * EXEMPLO DE RESPOSTA JSON:
+ * [
+ *   {
+ *     "id": 1,
+ *     "titulo": "Breaking Bad",
+ *     "totalTemporadas": 5,
+ *     "avaliacao": 9.5,
+ *     "genero": "DRAMA",
+ *     "atores": "Bryan Cranston, Aaron Paul",
+ *     "poster": "https://...",
+ *     "sinopse": "Um professor..."
+ *   },
+ *   { ... }
+ * ]
+ * 
+ * NOTA: Episódios NÃO aparecem no JSON!
  */
 @RestController
 public class SerieController {
 
+    // @Autowired: Injeção de dependência do Spring
+    // Spring cria automaticamente uma instância de SerieRepository e injeta aqui
+    @Autowired
+    private SerieRepository repositorio;
+
+    /**
+     * Endpoint GET /inicio
+     * 
+     * Endpoint simples para TESTAR o DevTools (hot reload automático).
+     * Retorna apenas uma mensagem de texto.
+     * 
+     * OBJETIVO:
+     * - Testar se DevTools está funcionando
+     * - Verificar hot reload automático
+     * - Endpoint de boas-vindas da API
+     * 
+     * COMO TESTAR DEVTOOLS:
+     * 1. Inicie a aplicação: mvn spring-boot:run
+     * 2. Acesse: http://localhost:8080/inicio
+     * 3. Veja a mensagem: "Bem-vindo ao Screenmatch!"
+     * 4. Altere a mensagem abaixo (ex: "Bem-vindo ao teste do DevTools!")
+     * 5. Salve o arquivo (Ctrl+S)
+     * 6. Aguarde 2-5 segundos (DevTools reinicia automaticamente)
+     * 7. Atualize o navegador (F5)
+     * 8. Veja a nova mensagem!
+     * 
+     * SE FUNCIONOU:
+     * ✅ DevTools está configurado corretamente
+     * ✅ Hot reload automático está ativo
+     * ✅ Não precisa parar/iniciar aplicação manualmente
+     * 
+     * @return Mensagem de boas-vindas (texto simples)
+     * 
+     * TESTES:
+     * - Navegador: http://localhost:8080/inicio
+     * - Postman: GET http://localhost:8080/inicio
+     * - cURL: curl http://localhost:8080/inicio
+     * 
+     * RESPOSTA:
+     * - HTTP 200 OK
+     * - Content-Type: text/plain
+     * - Body: "Bem-vindo ao Screenmatch!"
+     */
+    @GetMapping("/inicio")
+    public String inicio() {
+        // Retorna mensagem simples de texto
+        // Altere esta mensagem para testar o DevTools!
+        return "Bem-vindo ao Screenmatch!";
+    }
+
     /**
      * Endpoint GET /series
      * 
-     * Recebe um parâmetro opcional "nomedaserie" via query string.
+     * Retorna todas as séries cadastradas no banco de dados em formato JSON.
+     * Usa DTO para expor apenas dados necessários (SEM episódios).
      * 
-     * @param nomedaserie Nome da série (opcional)
-     * @return Mensagem com o nome da série ou aviso se não informado
+     * @return Lista de SerieDTO (convertida automaticamente para JSON)
      * 
      * TESTES:
      * - Navegador: http://localhost:8080/series
-     * - Navegador: http://localhost:8080/series?nomedaserie=Breaking%20Bad
-     * - Postman: GET http://localhost:8080/series?nomedaserie=Lost
+     * - Postman: GET http://localhost:8080/series
+     * - cURL: curl http://localhost:8080/series
+     * 
+     * RESPOSTA:
+     * - HTTP 200 OK
+     * - Content-Type: application/json
+     * - Body: [{"id":1,"titulo":"Breaking Bad",...}, {...}]
+     * - SEM campo "episodios" (controlado pelo DTO)
+     * 
+     * CONVERSÃO Serie → SerieDTO:
+     * 1. repositorio.findAll() → List<Serie> (entidades do banco)
+     * 2. .stream() → Stream<Serie> (para processar cada elemento)
+     * 3. .map(s -> new SerieDTO(...)) → Stream<SerieDTO> (converte cada Serie em SerieDTO)
+     * 4. .collect(Collectors.toList()) → List<SerieDTO> (coleta em lista)
+     * 5. Spring converte List<SerieDTO> para JSON
      */
     @GetMapping("/series")
-    public String obterSeries(@RequestParam(required = false) String nomedaserie) {
-        // Se o parâmetro não foi enviado na URL
-        if (nomedaserie == null) {
-            return "Nenhuma série informada";
-        }
-        // Retorna o nome da série informada
-        return "Série informada: " + nomedaserie;
+    public List<SerieDTO> obterSeries() {
+        // 1. Busca todas as séries do banco (List<Serie>)
+        // 2. Converte cada Serie para SerieDTO usando stream + map
+        // 3. Coleta resultado em List<SerieDTO>
+        return repositorio.findAll()
+                .stream()
+                .map(s -> new SerieDTO(
+                        s.getId(),              // Long id
+                        s.getTitulo(),          // String titulo
+                        s.getTotalTemporadas(), // Integer totalTemporadas
+                        s.getAvaliacao(),       // Double avaliacao
+                        s.getGenero(),          // Categoria genero
+                        s.getAtores(),          // String atores
+                        s.getPoster(),          // String poster
+                        s.getSinopse()          // String sinopse
+                ))
+                .collect(Collectors.toList());
+        
+        // NOTA: Episódios NÃO são incluídos no DTO!
+        // Isso evita:
+        // - Loop infinito de serialização
+        // - Carregar dados desnecessários
+        // - Expor estrutura interna do banco
     }
 
 }
