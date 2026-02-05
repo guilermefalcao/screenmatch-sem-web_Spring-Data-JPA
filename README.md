@@ -26,7 +26,9 @@ Projeto desenvolvido no segundo curso da formação Avançando com Java da Alura
 - ✅ Endpoints GET com @GetMapping (/series, /series/{id}, /series/top5, /series/lancamentos)
 - ✅ Endpoint para todos os episódios: /series/{id}/temporadas/todas
 - ✅ Endpoint para episódios por temporada: /series/{id}/temporadas/{numero}
-- ✅ @PathVariable para capturar parâmetros da URL (id, numero)
+- ✅ Endpoint para top 5 episódios: /series/{id}/temporadas/top
+- ✅ Endpoint para séries por categoria: /series/categoria/{nomeGenero}
+- ✅ @PathVariable para capturar parâmetros da URL (id, numero, nomeGenero)
 - ✅ Múltiplos @PathVariable em um mesmo endpoint
 - ✅ @RequestMapping para prefixo de rotas
 - ✅ DTOs (Data Transfer Objects) - SerieDTO e EpisodioDTO
@@ -40,9 +42,13 @@ Projeto desenvolvido no segundo curso da formação Avançando com Java da Alura
 - ✅ Método privado converteDados() para evitar duplicação (DRY)
 - ✅ Busca por ID com Optional e tratamento de null
 - ✅ JPQL com JOIN e WHERE para filtrar episódios por temporada
+- ✅ Reutilização de query JPQL existente (topEpisodiosPorSerie)
 - ✅ Backup da versão console (ScreenmatchApplicationSemWeb)
 - ✅ Configuração de classe principal no pom.xml
 - ✅ Testes de endpoints via navegador e Postman
+- ✅ Integração front-end com back-end
+- ✅ Desenvolvimento incremental e colaborativo
+- ✅ Comparação: Streams vs Consultas no banco de dados
 
 ### Aula 01 - Modelando a aplicação
 
@@ -229,6 +235,7 @@ Para usar a versão console com menu interativo:
 - Controllers REST com @RestController
 - Mapeamento de rotas com @GetMapping e @RequestMapping
 - @PathVariable para capturar parâmetros da URL (simples e múltiplos)
+- @PathVariable com números (Long id) e strings (String nomeGenero)
 - DTOs (Data Transfer Objects) - SerieDTO e EpisodioDTO
 - @JsonIgnore para evitar loop infinito
 - CORS (Cross-Origin Resource Sharing)
@@ -241,7 +248,14 @@ Para usar a versão console com menu interativo:
 - Busca por ID com Optional<T> e tratamento de null
 - JPQL com JOIN e WHERE para filtrar episódios por temporada
 - Endpoints para listar episódios (todas temporadas e por temporada)
+- Endpoint para top 5 episódios de uma série
+- Endpoint para filtrar séries por categoria/gênero
+- Reutilização de queries JPQL existentes
 - Baixo acoplamento e alta coesão
+- Trabalho colaborativo e testes exaustivos
+- Desenvolvimento incremental (requisitos identificados ao longo do tempo)
+- Comparação: Streams vs Consultas no banco de dados
+- Integração front-end com back-end
 
 ### Aula 03:
 - **Derived Query Methods** (Spring Data JPA gera SQL automaticamente)

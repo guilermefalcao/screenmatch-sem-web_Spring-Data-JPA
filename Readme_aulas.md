@@ -3779,3 +3779,256 @@ http://localhost:8080/series/8/temporadas/3 (Game of Thrones, temporada 3)
 **Desenvolvido por:** Guilherme Falcão  
 **Curso:** Alura - Formação Avançando com Java  
 **Última atualização:** Aula 04 - Parte 3 (Endpoints de Episódios)
+
+
+## 🌐 AULA 04 - Parte 4: Top 5 Episódios e Integração Front-end
+
+### 14. Endpoint: Top 5 Episódios de uma Série
+**Arquivos:** `controller/SerieController.java`, `service/SerieService.java`
+
+**O que faz:** Retorna os 5 episódios com melhor avaliação de uma série específica
+
+**Endpoint:**
+```java
+@GetMapping("/series/{id}/temporadas/top")
+public List<EpisodioDTO> obterTop5Episodios(@PathVariable Long id) {
+    return servico.obterTop5Episodios(id);
+}
+```
+
+**Service:**
+```java
+public List<EpisodioDTO> obterTop5Episodios(Long id) {
+    Optional<Serie> serie = repository.findById(id);
+    
+    if (serie.isPresent()) {
+        Serie s = serie.get();
+        
+        // Reutiliza query JPQL já existente (Aula 03)
+        return repository.topEpisodiosPorSerie(s)
+                .stream()
+                .map(e -> new EpisodioDTO(
+                        e.getTemporada(),
+                        e.getNumeroEpisodio(),
+                        e.getTitulo()
+                ))
+                .collect(Collectors.toList());
+    }
+    return null;
+}
+```
+
+**Repository (query já existia da Aula 03):**
+```java
+@Query("SELECT e FROM Serie s JOIN s.episodios e WHERE s = :serie ORDER BY e.avaliacao DESC LIMIT 5")
+List<Episodio> topEpisodiosPorSerie(@Param("serie") Serie serie);
+```
+
+**SQL gerado:**
+```sql
+SELECT e.* FROM episodios e
+JOIN series s ON e.serie_id = s.id
+WHERE s.id = ?
+ORDER BY e.avaliacao DESC
+LIMIT 5
+```
+
+**Teste:**
+```
+http://localhost:8080/series/7/temporadas/top (Breaking Bad)
+http://localhost:8080/series/1/temporadas/top (The Boys)
+http://localhost:8080/series/4/temporadas/top (Friends)
+```
+
+**Resposta:**
+```json
+[
+  {"temporada":5,"numeroEpisodio":14,"titulo":"Ozymandias"},
+  {"temporada":5,"numeroEpisodio":16,"titulo":"Felina"},
+  {"temporada":4,"numeroEpisodio":13,"titulo":"Face Off"},
+  {"temporada":5,"numeroEpisodio":13,"titulo":"To'hajiilee"},
+  {"temporada":3,"numeroEpisodio":13,"titulo":"Full Measure"}
+]
+```
+
+**Conceitos aprendidos:**
+- Reutilização de queries JPQL existentes
+- Endpoint com @PathVariable
+- Conversão Episodio → EpisodioDTO
+- Ordenação por avaliação (ORDER BY DESC)
+- LIMIT para top N resultados
+
+---
+
+### 15. Endpoint: Séries por Categoria
+**Arquivos:** `controller/SerieController.java`, `service/SerieService.java`
+
+**O que faz:** Retorna séries filtradas por categoria/gênero
+
+**Endpoint:**
+```java
+@GetMapping("/series/categoria/{nomeGenero}")
+public List<SerieDTO> obterSeriesPorCategoria(@PathVariable String nomeGenero) {
+    return servico.obterSeriesPorCategoria(nomeGenero);
+}
+```
+
+**Service:**
+```java
+public List<SerieDTO> obterSeriesPorCategoria(String nomeGenero) {
+    // Converte String → Enum usando método da Aula 03
+    Categoria categoria = Categoria.fromPortugues(nomeGenero);
+    
+    // Busca no banco e converte para DTO
+    return converteDados(repository.findByGenero(categoria));
+}
+```
+
+**Repository (Derived Query da Aula 03):**
+```java
+List<Serie> findByGenero(Categoria categoria);
+```
+
+**SQL gerado:**
+```sql
+SELECT * FROM series WHERE genero = 'DRAMA'
+```
+
+**Teste:**
+```
+http://localhost:8080/series/categoria/drama
+http://localhost:8080/series/categoria/acao
+http://localhost:8080/series/categoria/comedia
+```
+
+**Resposta:**
+```json
+[
+  {"id":9,"titulo":"Stranger Things","genero":"DRAMA",...},
+  {"id":7,"titulo":"Breaking Bad","genero":"CRIME",...}
+]
+```
+
+**Conceitos aprendidos:**
+- @PathVariable com String
+- Conversão String → Enum
+- Reutilização de Derived Query Methods
+- Filtro por categoria
+
+---
+
+### 16. Integração com Front-end
+**Arquivo:** `java-web-front/scripts/series.js`
+
+**O que faz:** Front-end consome endpoint `/series/{id}/temporadas/top`
+
+**Modificações no front-end:**
+
+1. **Adicionar opção "Top 5 Episódios" no menu:**
+```javascript
+// Adiciona opção Top 5 Episódios
+const optionTop5 = document.createElement('option');
+optionTop5.value = 'top';
+optionTop5.textContent = 'Top 5 Episódios'
+listaTemporadas.appendChild(optionTop5);
+```
+
+2. **Lógica condicional para chamar endpoint correto:**
+```javascript
+function carregarEpisodios() {
+    // Se selecionou Top 5, chama endpoint diferente
+    const endpoint = listaTemporadas.value === 'top' 
+        ? `/series/${serieId}/temporadas/top`
+        : `/series/${serieId}/temporadas/${listaTemporadas.value}`;
+    
+    getDados(endpoint)
+        .then(data => {
+            // Renderiza episódios...
+        });
+}
+```
+
+**Fluxo completo:**
+```
+1. Usuário acessa: http://127.0.0.1:5501/detalhes.html?id=7
+   ↓
+2. Front-end carrega série e temporadas
+   ↓
+3. Menu exibe: "Selecione temporada", 1, 2, 3, 4, 5, "Todas as temporadas", "Top 5 Episódios"
+   ↓
+4. Usuário seleciona "Top 5 Episódios"
+   ↓
+5. JavaScript chama: GET http://localhost:8080/series/7/temporadas/top
+   ↓
+6. Back-end retorna JSON com top 5 episódios
+   ↓
+7. Front-end renderiza lista de episódios
+```
+
+**Conceitos aprendidos:**
+- Integração front-end com back-end
+- Consumo de API REST com fetch()
+- Lógica condicional para endpoints
+- Desenvolvimento incremental
+- Trabalho colaborativo
+
+---
+
+## 📊 Endpoints Finais da API
+
+| Endpoint | Método | Retorno | Descrição |
+|----------|--------|---------|-----------| | `/series` | GET | List<SerieDTO> | Todas as séries |
+| `/series/top5` | GET | List<SerieDTO> | Top 5 avaliações |
+| `/series/lancamentos` | GET | List<SerieDTO> | 5 lançamentos recentes |
+| `/series/{id}` | GET | SerieDTO | Série específica |
+| `/series/{id}/temporadas/todas` | GET | List<EpisodioDTO> | Todos os episódios |
+| `/series/{id}/temporadas/{numero}` | GET | List<EpisodioDTO> | Episódios da temporada |
+| `/series/{id}/temporadas/top` | GET | List<EpisodioDTO> | Top 5 episódios |
+| `/series/categoria/{nomeGenero}` | GET | List<SerieDTO> | Séries por categoria |
+
+---
+
+## 📝 Resumo da Aula 04 - Completa
+
+### ✅ O que você aprendeu:
+
+1. **Trabalho colaborativo**
+   - Testar exaustivamente com registros diferentes
+   - Confirmar que buscas estão corretas
+   - Desenvolvimento incremental
+
+2. **Passar parâmetros na URL**
+   - @PathVariable com números (Long id)
+   - @PathVariable com strings (String nomeGenero)
+   - Múltiplos @PathVariable no mesmo endpoint
+
+3. **Comparar streams e buscas no banco**
+   - Streams: Manipulação de dados em memória
+   - Banco: Queries otimizadas com índices
+   - Não precisa usar exclusivamente um ou outro
+   - Analisar complexidade de cada caso
+
+4. **Desenvolvimento incremental**
+   - Identificar requisitos ao longo do tempo
+   - Trabalho incremental é comum no desenvolvimento
+   - Integração front-end com back-end
+   - Requisitos surgem durante integração
+
+5. **Reutilização de código**
+   - Query JPQL topEpisodiosPorSerie() já existia (Aula 03)
+   - Derived Query findByGenero() já existia (Aula 03)
+   - Método converteDados() reutilizado (DRY)
+   - Categoria.fromPortugues() reutilizado
+
+6. **Arquitetura completa**
+   - Controller: Recebe requisições HTTP
+   - Service: Lógica de negócio e conversões
+   - Repository: Queries JPQL e Derived Queries
+   - DTO: Transferência de dados
+   - Front-end: Consumo da API REST
+
+---
+
+**Desenvolvido por:** Guilherme Falcão  
+**Curso:** Alura - Formação Avançando com Java  
+**Última atualização:** Aula 04 - Parte 4 (Top 5 Episódios + Integração Front-end)

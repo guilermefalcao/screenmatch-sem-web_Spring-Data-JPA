@@ -2,6 +2,7 @@ package br.com.alura.screenmatch.service;
 
 import br.com.alura.screenmatch.dto.EpisodioDTO;
 import br.com.alura.screenmatch.dto.SerieDTO;
+import br.com.alura.screenmatch.model.Categoria;
 import br.com.alura.screenmatch.model.Serie;
 import br.com.alura.screenmatch.repository.SerieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -286,6 +287,113 @@ public class SerieService {
                         e.getTitulo()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtém séries por categoria/gênero
+     * 
+     * FLUXO:
+     * 1. Controller recebe nome do gênero em português ("drama", "acao", "comedia")
+     * 2. Service converte String → Enum: Categoria.fromPortugues(nomeGenero)
+     * 3. Service busca no Repository: repository.findByGenero(categoria)
+     * 4. Repository executa Derived Query: SELECT * FROM series WHERE genero = ?
+     * 5. Service converte Serie → SerieDTO usando converteDados()
+     * 6. Retorna List<SerieDTO>
+     * 
+     * POR QUE CONVERTER STRING → ENUM?
+     * - URL usa texto amigável: "drama", "acao", "comedia"
+     * - Banco usa enum: DRAMA, ACAO, COMEDIA
+     * - Categoria.fromPortugues() aceita variações:
+     *   - "ação", "acao", "action" → ACAO
+     *   - "comédia", "comedia", "comedy" → COMEDIA
+     *   - "drama", "Drama", "DRAMA" → DRAMA
+     * 
+     * SQL GERADO:
+     * SELECT * FROM series WHERE genero = 'DRAMA'
+     * 
+     * REUTILIZAÇÃO:
+     * - Usa converteDados() (DRY - Don't Repeat Yourself)
+     * - Usa findByGenero() do Repository (Derived Query Method)
+     * - Usa fromPortugues() do Enum Categoria
+     * 
+     * @param nomeGenero Nome do gênero em português ("drama", "acao", "comedia"...)
+     * @return Lista de SerieDTO da categoria
+     * 
+     * Exemplos de uso:
+     * - obterSeriesPorCategoria("drama") → Séries de drama
+     * - obterSeriesPorCategoria("acao") → Séries de ação
+     * - obterSeriesPorCategoria("comedia") → Séries de comédia
+     */
+    public List<SerieDTO> obterSeriesPorCategoria(String nomeGenero) {
+        // Converte String ("drama") → Enum (DRAMA)
+        Categoria categoria = Categoria.fromPortugues(nomeGenero);
+        
+        // Busca séries no banco e converte para DTO
+        return converteDados(repository.findByGenero(categoria));
+    }
+
+    /**
+     * Obtém os Top 5 episódios com melhor avaliação de uma série específica
+     * 
+     * FLUXO:
+     * 1. Controller recebe ID da série
+     * 2. Service busca série no banco: repository.findById(id)
+     * 3. Verifica se série existe: serie.isPresent()
+     * 4. Se existe: Chama repository.topEpisodiosPorSerie(serie)
+     * 5. Repository executa JPQL com JOIN, ORDER BY e LIMIT 5
+     * 6. Service converte Episodio → EpisodioDTO
+     * 7. Retorna List<EpisodioDTO>
+     * 8. Se NÃO existe: Retorna null
+     * 
+     * SQL GERADO:
+     * SELECT e.* FROM episodios e
+     * JOIN series s ON e.serie_id = s.id
+     * WHERE s.id = ?
+     * ORDER BY e.avaliacao DESC
+     * LIMIT 5
+     * 
+     * POR QUE USAR JPQL?
+     * - Busca direta no banco (mais rápido)
+     * - Ordenação no banco (ORDER BY e.avaliacao DESC)
+     * - LIMIT 5 otimizado (não carrega todos os episódios)
+     * - Retorna apenas os 5 melhores episódios
+     * 
+     * CONVERSÃO:
+     * Episodio (entidade) → EpisodioDTO (DTO)
+     * - e.getTemporada() → temporada
+     * - e.getNumeroEpisodio() → numeroEpisodio
+     * - e.getTitulo() → titulo
+     * 
+     * @param id ID da série
+     * @return Lista com até 5 EpisodioDTO (melhores avaliações) ou null se série não existir
+     * 
+     * Exemplos de uso:
+     * - obterTop5Episodios(7) → Top 5 episódios de Breaking Bad
+     * - obterTop5Episodios(1) → Top 5 episódios de The Boys
+     */
+    public List<EpisodioDTO> obterTop5Episodios(Long id) {
+        // Busca série no banco
+        Optional<Serie> serie = repository.findById(id);
+        
+        // Verifica se a série existe
+        if (serie.isPresent()) {
+            // Extrai o objeto Serie do Optional
+            Serie s = serie.get();
+            
+            // Busca top 5 episódios no banco usando JPQL
+            // Converte lista de Episodio → lista de EpisodioDTO
+            return repository.topEpisodiosPorSerie(s)
+                    .stream()
+                    .map(e -> new EpisodioDTO(
+                            e.getTemporada(),
+                            e.getNumeroEpisodio(),
+                            e.getTitulo()
+                    ))
+                    .collect(Collectors.toList());
+        }
+        
+        // Se não encontrar, retorna null
+        return null;
     }
 
     /**

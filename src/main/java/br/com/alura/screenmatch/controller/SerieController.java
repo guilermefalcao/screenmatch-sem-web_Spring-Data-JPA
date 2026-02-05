@@ -273,59 +273,105 @@ public class SerieController {
     }
 
     /**
-     * Endpoint GET /series/{id}/temporadas/{numero}
+     * Endpoint GET /series/categoria/{nomeGenero}
      * 
-     * Retorna episódios de UMA temporada específica de uma série.
+     * Retorna séries de uma categoria/gênero específico.
      * 
-     * @PathVariable: Captura DOIS parâmetros da URL
-     * - {id}: ID da série
-     * - {numero}: Número da temporada
-     * 
-     * EXEMPLOS DE URL:
-     * - /series/7/temporadas/1 → id = 7, numero = 1 (Breaking Bad, temporada 1)
-     * - /series/1/temporadas/2 → id = 1, numero = 2 (The Boys, temporada 2)
+     * @PathVariable: Captura o nome do gênero da URL
+     * - URL: /series/categoria/drama → nomeGenero = "drama"
+     * - URL: /series/categoria/acao → nomeGenero = "acao"
+     * - URL: /series/categoria/comedia → nomeGenero = "comedia"
      * 
      * FLUXO:
-     * 1. Cliente: GET http://localhost:8080/series/7/temporadas/1
-     * 2. Controller recebe id = 7 e numero = 1 via @PathVariable
-     * 3. Controller chama Service: servico.obterTemporadasPorNumero(7, 1)
-     * 4. Service chama Repository: repository.obterEpisodiosPorTemporada(7, 1)
-     * 5. Repository executa JPQL: SELECT e FROM Serie s JOIN s.episodios e WHERE s.id = 7 AND e.temporada = 1
-     * 6. Service converte Episodio → EpisodioDTO
-     * 7. Controller retorna JSON para cliente
+     * 1. Cliente: GET http://localhost:8080/series/categoria/drama
+     * 2. Controller recebe nomeGenero = "drama" via @PathVariable
+     * 3. Controller chama Service: servico.obterSeriesPorCategoria("drama")
+     * 4. Service converte String → Enum: Categoria.fromPortugues("drama")
+     * 5. Service busca no Repository: repository.findByGenero(DRAMA)
+     * 6. Repository executa: SELECT * FROM series WHERE genero = 'DRAMA'
+     * 7. Service converte Serie → SerieDTO
+     * 8. Controller retorna JSON para cliente
+     * 
+     * POR QUE CONVERTER STRING → ENUM?
+     * - URL usa texto amigável: "drama", "acao", "comedia"
+     * - Banco usa enum: DRAMA, ACAO, COMEDIA
+     * - Categoria.fromPortugues() faz a conversão
+     * - Aceita variações: "ação", "acao", "action"
      * 
      * SQL GERADO:
-     * SELECT e.* FROM series s
-     * JOIN episodios e ON s.id = e.serie_id
-     * WHERE s.id = 7 AND e.temporada = 1
+     * SELECT * FROM series WHERE genero = 'DRAMA'
      * 
-     * POR QUE USAR JPQL?
-     * - Busca direta no banco (mais rápido)
-     * - Filtra por série E temporada em uma única query
-     * - Não carrega todos os episódios da série
-     * - Retorna apenas episódios da temporada solicitada
-     * 
-     * @param id ID da série (vem da URL)
-     * @param numero Número da temporada (vem da URL)
-     * @return Lista de EpisodioDTO da temporada
+     * @param nomeGenero Nome do gênero em português (vem da URL)
+     * @return Lista de SerieDTO da categoria
      * 
      * TESTE:
-     * http://localhost:8080/series/7/temporadas/1 (Breaking Bad, temporada 1)
-     * http://localhost:8080/series/1/temporadas/2 (The Boys, temporada 2)
-     * http://localhost:8080/series/8/temporadas/3 (Game of Thrones, temporada 3)
+     * http://localhost:8080/series/categoria/drama
+     * http://localhost:8080/series/categoria/acao
+     * http://localhost:8080/series/categoria/comedia
+     * http://localhost:8080/series/categoria/crime
      * 
      * RESPOSTA:
      * [
-     *   {"temporada":1,"numeroEpisodio":1,"titulo":"Pilot"},
-     *   {"temporada":1,"numeroEpisodio":2,"titulo":"Cat's in the Bag..."},
-     *   {"temporada":1,"numeroEpisodio":3,"titulo":"...And the Bag's in the River"},
+     *   {"id":9,"titulo":"Stranger Things","genero":"DRAMA",...},
+     *   {"id":7,"titulo":"Breaking Bad","genero":"CRIME",...}
+     * ]
+     */
+    @GetMapping("/series/categoria/{nomeGenero}")
+    public List<SerieDTO> obterSeriesPorCategoria(@PathVariable String nomeGenero) {
+        // @PathVariable: Extrai o {nomeGenero} da URL e passa como parâmetro
+        return servico.obterSeriesPorCategoria(nomeGenero);
+    }
+
+    /**
+     * Endpoint GET /series/{id}/temporadas/top
+     * 
+     * Retorna os TOP 5 episódios com melhor avaliação de uma série específica.
+     * 
+     * @PathVariable: Captura o ID da série da URL
+     * - URL: /series/1/temporadas/top → id = 1
+     * - URL: /series/7/temporadas/top → id = 7
+     * 
+     * FLUXO:
+     * 1. Cliente: GET http://localhost:8080/series/7/temporadas/top
+     * 2. Controller recebe id = 7 via @PathVariable
+     * 3. Controller chama Service: servico.obterTop5Episodios(7)
+     * 4. Service busca série no banco: repository.findById(7)
+     * 5. Service chama Repository: repository.topEpisodiosPorSerie(serie)
+     * 6. Repository executa JPQL com JOIN, ORDER BY e LIMIT 5
+     * 7. Service converte Episodio → EpisodioDTO
+     * 8. Controller retorna JSON para cliente
+     * 
+     * SQL GERADO:
+     * SELECT e.* FROM episodios e
+     * JOIN series s ON e.serie_id = s.id
+     * WHERE s.id = 7
+     * ORDER BY e.avaliacao DESC
+     * LIMIT 5
+     * 
+     * POR QUE USAR ESTE ENDPOINT?
+     * - Front-end exibe os melhores episódios de cada série
+     * - Usuário vê rapidamente os episódios mais bem avaliados
+     * - Útil para recomendar episódios para assistir
+     * 
+     * @param id ID da série (vem da URL)
+     * @return Lista com até 5 EpisodioDTO (melhores avaliações) ou null se série não existir
+     * 
+     * TESTE:
+     * http://localhost:8080/series/7/temporadas/top (Breaking Bad)
+     * http://localhost:8080/series/1/temporadas/top (The Boys)
+     * 
+     * RESPOSTA:
+     * [
+     *   {"temporada":5,"numeroEpisodio":14,"titulo":"Ozymandias"},
+     *   {"temporada":5,"numeroEpisodio":16,"titulo":"Felina"},
+     *   {"temporada":4,"numeroEpisodio":13,"titulo":"Face Off"},
      *   ...
      * ]
      */
-    @GetMapping("/series/{id}/temporadas/{numero}")
-    public List<EpisodioDTO> obterTemporadaPorNumero(@PathVariable Long id, @PathVariable Long numero) {
-        // @PathVariable: Extrai {id} e {numero} da URL e passa como parâmetros
-        return servico.obterTemporadasPorNumero(id, numero);
+    @GetMapping("/series/{id}/temporadas/top")
+    public List<EpisodioDTO> obterTop5Episodios(@PathVariable Long id) {
+        // @PathVariable: Extrai o {id} da URL e passa como parâmetro
+        return servico.obterTop5Episodios(id);
     }
 
 }

@@ -1,0 +1,142 @@
+
+nesta aula,
+no SerieRepositoru,
+
+Criado o List<Episodio> findTop5ByOrderByEpisodiosDataLancamentoDesc();
+
+no SerieController:
+@getMapping('/lancamentos") 
+public List<SerieDTO> obterLancamentos() {
+return servico.obterLancamentos
+
+
+
+e em SerieService:
+public List<SerieDTO> obterLancamentos() {
+        return converteDados(repository.findTop5ByOrderByEpisodiosDataLancamentoDesc());
+    }
+
+
+
+------------------ aula 03 - curso Java: criando sua primeira API e conectando ao front  ----------
+ter mais um endpoint
+no serieController
+criar @getmapping para buscar apenas 1 serie /{id}
+vai devolver 1 serieDTO obterPorID(@PatrhVariableLong id)   //para dizer q eh uma variável que esta vindo no caminho do path
+return servico.obterPorId(id);
+
+
+no SerieService, criar o método:
+public SerieDTO obterPorId(Long id){
+Optional<Serie> serie = repositório.findById(id);
+
+if (serie.isPresent()){
+Serie s = serie.get();
+return new SerieDTO(s.getID, s.getTitulo, s.getTotalTemporadas, s.getAvaliacao, s.getGenero , s.getAtores, s.getPoster, s.getSinopse
+}
+return null;
+
+}
+
+
+
+-----------------------
+O erro ocorre porque o Spring Boot detectou a dependência spring-boot-starter-web mas não encontrou servidor web. Preciso desabilitar o servidor web para modo console.
+
+1. Breaking Bad
+2. Game of Thrones
+3. Stranger Things
+4. Lost
+
+--------------
+nesta aula, erro 404 quando quer mostrar todos os episodios de todas as temporadas,
+essa url no front end;
+configurar no SerieControler criar a url @getmapping(/{id}/temporadas/todas)
+passar o id da serie 
+devolver episódios
+public List<EpisodiosDTO> obterTodasTemporadas(@Pathvariable long id){
+return servico.obterTodasTemporadas(id);
+
+
+criar uma record no pacote dto
+public record EpisodioDTO(integer temporada, integer numeroEpisodio, string titulo){
+
+
+criar um método em SerieService
+public List <EpisodioDTO> obterTodasTemporadas(Long id){
+Optional<Serie> serie = repositório.findByID(id);
+  if (serie.isPresent()) {
+            // Extrai o objeto Serie do Optional
+            Serie s = serie.get();
+            
+       return s.getEpisodios.stream()
+.map(e -> new EpisodioDTO(e.getTemporada, e.getNumeroEpisodio, e.getTitulo
+.collect(Collectors.toList           );
+}
+return null
+
+
+
+
+--------------
+exibindo episódios por temporada;
+quando clica na temporada 1 não acontece nada;
+digita F12, tentou chamar /series/10/temporadas/1:1
+
+criar no controller a url
+/{id}/temporadas/{numero}
+vai precisar de 2 patchvariables
+public List<episodioDTO> obtertemporadapornumero(@pathvariable long id, @pathvariable long numero)
+return servico.obterTemporadasPorNumero(id, numero);
+
+
+criar este método no service
+public List<episodioDTO> obtertemporadapornumero( long id,  long numero){
+return repositório.obterEpisodiosPorTemporada(id, numero)
+.stream()
+.map(e -> new EpisodioDTO(e.getTemporada, e.getNumeroEpisodio, e.getTitulo
+.collect(Collectors.toList());   
+
+
+criar metodo no SerieRepository:
+@Query(Select e from serie s join s.episodios e where s.id = :id and e.temporada = :numero)
+List<episodio> obterEpisodiosPorTemporada( long id,  long numero);
+
+
+----------
+aula Trabalhando com series categorizadas:
+quando seleciona comedia ou ação ou crime, 
+precisa criar mais uma url;
+/series/categoria/drama
+
+no SerieController, criar um 
+@GetMApping(/categoria/{nomeGenero})
+public List <SerieDTO> obterSeriesPorCategoria(@pathvariable String nomeGenero){
+return servico.obterSeriesPorCategoria(nomeGenero)	//chamar o método da service
+}
+
+//criar o método em SerieService:
+public List <SerieDTO> obterSeriesPorCategoria( String nomeGenero){
+Categoria categoria = Categoria.fromPortugues(nomeGenero);
+returnconverteDados( repositório.findByGenero(categoria));
+
+}
+
+------------------------
+desafio = adicionar mais um endpoit para listar os top5:
+criar o endpoint /series/{id}/temporadas/top para retornar os top 5 episódios de uma série específica.
+
+Arquivos que serão modificados:
+SerieController.java - Adicionar novo endpoint
+SerieService.java - Adicionar método de lógica de negócio
+SerieRepository.java - Adicionar query JPQL para buscar top episódios
+
+
+
+
+
+
+
+
+
+
